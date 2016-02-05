@@ -1,9 +1,12 @@
 drop table if exists entries;
 create table entries(
   id serial primary key,
-  amount integer not null
+  amount float8 not null
 );
 
+-- Ensure "random" rows are created the same for each test run.
+select setseed(0);
+
 insert into entries(amount)
-select (2000 * random())::integer - 1000
-from generate_series(1, 100000);
+select (2000 * random()) - 1000
+from generate_series(1, 1000000);

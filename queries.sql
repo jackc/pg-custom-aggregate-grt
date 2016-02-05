@@ -6,10 +6,13 @@ from entries
 -- What is greatest running total
 select max(running_total)
 from (
-  select id, amount, sum(amount) over (order by id asc) as running_total
+  select sum(amount) over (order by id asc) as running_total
   from entries
 ) t
 ;
+
+-- What is greatest running total with custom aggregate
+select greatest_running_total(amount) from entries;
 
 -- What and when was the greatest running total
 select *

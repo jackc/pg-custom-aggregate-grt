@@ -1,44 +1,45 @@
-drop aggregate if exists greatest_running_total(integer);
-drop function if exists grt_finalfunc(integer[]);
-drop function if exists grt_sfunc(integer[], integer);
+drop aggregate if exists greatest_running_total(float8);
+drop function if exists grt_finalfunc(point);
+drop function if exists grt_sfunc(point, float8);
 
-create function grt_sfunc(accum integer[], el integer)
-returns integer[]
+create function grt_sfunc(agg_state point, el float8)
+returns point
 immutable
 language plpgsql
 as $$
+declare
+  greatest_sum float8;
+  current_sum float8;
 begin
-  accum[2] = accum[2] + el;
-  if accum[1] < accum[2] then
-    accum[1] = accum[2];
+  if agg_state is null then
+    return point(el, el);
   end if;
 
-  return accum;
+  current_sum := agg_state[0] + el;
+  if agg_state[1] < current_sum then
+    greatest_sum := current_sum;
+  else
+    greatest_sum := agg_state[1];
+  end if;
+
+  return point(current_sum, greatest_sum);
 end;
 $$;
 
--- create function grt_sfunc(accum integer[], el integer)
--- returns integer[]
--- immutable
--- language sql
--- as $$
--- select array[greatest(accum[1], accum[2]+el), accum[2]+el]::integer[];
--- $$;
-
-create function grt_finalfunc(accum integer[])
-returns integer
+create function grt_finalfunc(agg_state point)
+returns float8
 immutable
+strict
 language plpgsql
 as $$
 begin
-  return accum[1];
+  return agg_state[1];
 end;
 $$;
 
-create aggregate greatest_running_total (integer)
+create aggregate greatest_running_total (float8)
 (
     sfunc = grt_sfunc,
-    stype = integer[],
-    finalfunc = grt_finalfunc,
-    initcond = '{0,0}'
+    stype = point,
+    finalfunc = grt_finalfunc
 );
