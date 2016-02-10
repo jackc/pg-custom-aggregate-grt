@@ -12,7 +12,7 @@ from (
 ;
 
 -- What is greatest running total with custom aggregate
-select greatest_running_total(amount) from entries;
+select greatest_running_total(amount order by id asc) from entries;
 
 -- What and when was the greatest running total
 select *
